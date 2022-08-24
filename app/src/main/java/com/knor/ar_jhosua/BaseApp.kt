@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.PersistableBundle
+import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -30,6 +31,10 @@ class BaseApp : BaseScannerActivity() {
     override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
         super.onCreate(savedInstanceState, persistentState)
         setContentView(R.layout.activity_main2)
+
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+        actionBar?.hide()
+
         val camera: Button? = findViewById(R.id.btnSome)
 
         camera?.setOnClickListener {

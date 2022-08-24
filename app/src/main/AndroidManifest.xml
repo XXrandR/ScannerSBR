@@ -16,10 +16,10 @@
         android:supportsRtl="true"
         tools:targetApi="31">
         <activity
-            android:name=".SimpleRecord"
+            android:name=".BaseApp"
             android:exported="false" />
         <activity
-            android:name=".BaseApp"
+            android:name=".SimpleRecord"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
