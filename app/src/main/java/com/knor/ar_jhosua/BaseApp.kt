@@ -1,28 +1,28 @@
 package com.knor.ar_jhosua
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
 import android.os.PersistableBundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import net.kuama.documentscanner.exceptions.NullCorners
+import net.kuama.documentscanner.exceptions.MissingSquareException
 import net.kuama.documentscanner.presentation.BaseScannerActivity
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 class BaseApp : BaseScannerActivity() {
 
-    companion object{
-        private const val CAMERA_PERMISSION_CODE = 100
-        private const val STORAGE_PERMISSION_CODE = 101
-    }
 
     override fun onError(throwable: Throwable) {
         when(throwable){
-            is NullCorners -> Toast.makeText(this, "CONVERTED", Toast.LENGTH_LONG)
+            is MissingSquareException -> Toast.makeText(this, "ATTEMPT TO CONVERTED", Toast.LENGTH_LONG)
                 .show()
             else -> Toast.makeText(this, "ERROR IN SOMETHING", Toast.LENGTH_LONG).show()
         }
@@ -36,53 +36,50 @@ class BaseApp : BaseScannerActivity() {
         actionBar?.hide()
 
         val camera: Button? = findViewById(R.id.btnSome)
-
-        camera?.setOnClickListener {
-            checkPermission(Manifest.permission.CAMERA,
-                CAMERA_PERMISSION_CODE)
-        }
     }
 
     override fun onDocumentAccepted(bitmap: Bitmap) {
+        // WRITE THE IMAGE
+        saveImage(bitmap)
+        Toast.makeText(this, "Image Generated Correctly!...It's great!",Toast.LENGTH_SHORT)
     }
 
     override fun onClose() {
         finish()
     }
 
-    /////////////////////////////////////////
-    private fun checkPermission(permission: String, requestCode: Int) {
-        if (ContextCompat.checkSelfPermission(this@BaseApp, permission) == PackageManager.PERMISSION_DENIED) {
+    // FUNCTION TO SAVE THE IMAGE
+    private fun saveImage(imgBitmap : Bitmap) : Uri {
 
-            // Requesting the permission
-            ActivityCompat.requestPermissions(this@BaseApp, arrayOf(permission), requestCode)
-        } else {
-            Toast.makeText(this@BaseApp, "Permission already granted", Toast.LENGTH_SHORT).show()
+        val timeStamp : String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+
+        val fileName : String = "recognizement_${timeStamp}.jpg"
+
+        val storagePath : String = filesDir.toString()
+        val storageDir = File(storagePath)
+        if(!storageDir.exists()) {
+            Log.i("TAG", "Directory is newly created")
+            storageDir.mkdirs()
         }
-    }
-
-    // This function is called when the user accepts or decline the permission.
-    // Request Code is used to check which permission called this function.
-    // This request code is provided when the user is prompt for permission.
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>,
-                                            grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == CAMERA_PERMISSION_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this@BaseApp, "Camera Permission Granted", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this@BaseApp, "Camera Permission Denied", Toast.LENGTH_SHORT).show()
-            }
-        } else if (requestCode == STORAGE_PERMISSION_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this@BaseApp, "Storage Permission Granted", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this@BaseApp, "Storage Permission Denied", Toast.LENGTH_SHORT).show()
-            }
+        if (storageDir.exists()) {
+            Log.i("TAG", "Directory is available")
         }
+
+        // Save image to storage
+        val imageFile = File(storageDir,fileName)
+        Log.i("TAG", "File created with path ${imageFile.absolutePath}")
+        try {
+            val fOut = FileOutputStream(imageFile)
+            imgBitmap.compress(Bitmap.CompressFormat.JPEG, 50, fOut)
+            fOut.flush()
+            fOut.close()
+            Log.i("TAG", "Image file created.")
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.i("TAG", "Image file not success.")
+        }
+
+        // Parse the gallery image url to uri
+        return Uri.parse(imageFile.absolutePath)
     }
-
-
-
 }
